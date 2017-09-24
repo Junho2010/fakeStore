@@ -2,7 +2,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-# 用户
 class User(AbstractUser):
     '''
     用户表，新增QQ和Mobile字段
@@ -116,17 +115,17 @@ class Tag(models.Model):
         return self.name
 
 
-class Name(models.Model):
+class Clothing(models.Model):
     '''
     商品
     '''
-    catogory = models.ForeignKey(Category, verbose_name='分类')
+    category = models.ForeignKey(Category, verbose_name='分类')
     name = models.CharField(max_length=30, verbose_name='名称')
     brand = models.ForeignKey(Brand, verbose_name='品牌')
     size = models.ManyToManyField(Size, verbose_name='尺寸')
-    old_price = models.FloatField(default=0.0, verbose_name='原价', max_digits=10, decimal_palces=2)
-    new_price = models.FloatField(default=0.0, verbose_name='现价', max_digits=10, decimal_palces=2)
-    discount = models.FloatField(default=1, verbose_name='折扣', max_digits=3, decimal_palces=2)
+    old_price = models.FloatField(default=0.0, verbose_name='原价')
+    new_price = models.FloatField(default=0.0, verbose_name='现价')
+    discount = models.FloatField(default=1, verbose_name='折扣')
     desc = models.CharField(max_length=100, verbose_name='简介')
     sales = models.IntegerField(default=0, verbose_name='销量')
     tag = models.ManyToManyField(Tag, verbose_name='标签')
@@ -149,4 +148,36 @@ class Name(models.Model):
         return self.__str__
 
 
-    
+class Caritem(models.Model):
+    '''
+    购物车条目
+    '''
+    clothing = models.ForeignKey(Clothing, verbose_name='购物车中产品条目')
+    quantity = models.IntegerField(default=0, verbose_name='数量')
+    sum_price = models.FloatField(default=0.0, verbose_name='小计')
+
+    class Meta:
+        verbose_name = '购物车条目'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return str(self.id)
+
+    def __unicode__(self):
+        return self.__str__
+
+
+class Cart(object):
+    def __init__(self):
+        self.items = []
+        self.total_price = 0.0
+
+    def add(self, clothing):
+        self.total_price += clothing.new_price
+        for item in self.items:
+            if item.clothing.id == clothing.id:
+                item.quantity += 1
+                item.sum_price += clothing.new_price
+                return
+            else:
+                self.items.append(Caritem(clothing=clothing, quantity=1, sum_price=clothing.new_price))
